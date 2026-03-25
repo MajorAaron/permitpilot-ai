@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 export default async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("", {
@@ -10,12 +8,10 @@ export default async (req) => {
   try {
     const { businessType, state, city, description } = await req.json();
     if (!businessType || !state) {
-      return new Response(JSON.stringify({ error: "Business type and state are required" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Business type and state are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
+    const GEMINI_KEY = process.env.GEMINI_API_KEY;
     const prompt = `You are PermitPilot AI, an expert on US business permits, licenses, and regulatory compliance. A user wants to start a business. Analyze what they need.
 
 Business Type: ${businessType}
@@ -38,39 +34,42 @@ Provide a comprehensive permit/license analysis in the following JSON format:
       "processingTime": "X-X weeks",
       "renewalFrequency": "Annual/One-time/etc",
       "difficulty": "easy|moderate|complex",
-      "applicationUrl": "URL if known or 'Varies by jurisdiction'",
       "tips": "Key tip for this permit"
     }
   ],
-  "complianceChecklist": [
-    "Step 1: ...",
-    "Step 2: ..."
-  ],
+  "complianceChecklist": ["Step 1: ...", "Step 2: ..."],
   "warnings": ["Any critical warnings or common mistakes"],
   "industrySpecificNotes": "Any industry-specific regulatory notes"
 }
 
 Be thorough and accurate. Include federal (EIN, etc), state, local, and industry-specific requirements. Return ONLY valid JSON.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+        })
+      }
+    );
 
-    // Extract JSON from response
+    const geminiData = await geminiRes.json();
+    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return new Response(JSON.stringify({ error: "Failed to parse AI response" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Failed to parse AI response" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 
     const analysis = JSON.parse(jsonMatch[0]);
-
     return new Response(JSON.stringify(analysis), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
   } catch (error) {
-    console.error("Error:", error);
     return new Response(JSON.stringify({ error: "Analysis failed: " + error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
   }
 };
