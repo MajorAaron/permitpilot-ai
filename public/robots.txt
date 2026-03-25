@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://permitpilot-ai-app.netlify.app/sitemap.xml
