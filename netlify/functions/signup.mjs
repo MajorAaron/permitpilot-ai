@@ -13,6 +13,14 @@ export default async (req) => {
       return new Response(JSON.stringify({ error: "Email is required" }), { status: 400 });
     }
 
+    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+      console.error("Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN environment variables");
+      return new Response(JSON.stringify({ error: "Service temporarily unavailable. Please try again later." }), {
+        status: 503,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
     const db = createClient({
       url: process.env.TURSO_DATABASE_URL,
       authToken: process.env.TURSO_AUTH_TOKEN,
@@ -79,7 +87,7 @@ export default async (req) => {
     });
   } catch (error) {
     console.error("Signup error:", error);
-    return new Response(JSON.stringify({ error: "Signup failed: " + error.message }), {
+    return new Response(JSON.stringify({ error: "Something went wrong. Please try again later." }), {
       status: 500,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
