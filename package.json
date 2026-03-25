@@ -1,0 +1,14 @@
+{
+  "name": "permitpilot-ai",
+  "version": "1.0.0",
+  "description": "AI-powered business permit and licensing navigator",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "netlify deploy --prod --dir=public"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.6.0",
+    "@google/generative-ai": "^0.21.0",
+    "node-fetch": "^3.3.2"
+  }
+}

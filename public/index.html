@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PermitPilot AI — Navigate Business Permits with AI</title>
+    <meta name="description" content="AI-powered business permit and licensing navigator. Find every permit, license, and certification your business needs in seconds.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0A0E1A;
+            --bg-secondary: #111827;
+            --bg-card: #1A2035;
+            --border: #2A3352;
+            --accent: #3B82F6;
+            --accent-green: #10B981;
+            --accent-amber: #F59E0B;
+            --accent-red: #EF4444;
+            --accent-purple: #8B5CF6;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        /* Navigation */
+        .nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-weight: 800; font-size: 1.3rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .logo span { font-size: 1.5rem; }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-cta {
+            background: var(--accent); color: white; padding: 8px 20px;
+            border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: #2563EB; transform: translateY(-1px); }
+
+        /* Hero */
+        .hero {
+            padding: 160px 24px 80px; text-align: center;
+            background: radial-gradient(ellipse at center top, rgba(59,130,246,0.08) 0%, transparent 60%);
+            position: relative;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+            padding: 6px 16px; border-radius: 50px; font-size: 0.8rem;
+            color: var(--accent); font-weight: 500; margin-bottom: 24px;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 900;
+            line-height: 1.1; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, #3B82F6, #10B981, #8B5CF6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { font-size: 1.15rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 40px; }
+        .hero-stats {
+            display: flex; justify-content: center; gap: 48px; margin-top: 48px;
+            flex-wrap: wrap;
+        }
+        .hero-stat { text-align: center; }
+        .hero-stat .num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+        .hero-stat .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Tool Section */
+        .tool-section {
+            max-width: 900px; margin: 0 auto; padding: 40px 24px 80px;
+        }
+        .tool-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 40px; position: relative; overflow: hidden;
+        }
+        .tool-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-green), var(--accent-purple));
+        }
+        .tool-header { margin-bottom: 32px; }
+        .tool-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+        .tool-header p { color: var(--text-secondary); font-size: 0.95rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 16px; color: var(--text-primary);
+            font-family: inherit; font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--accent);
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group select { cursor: pointer; }
+        .form-group select option { background: var(--bg-primary); }
+        .analyze-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white; border: none; border-radius: 12px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s;
+            font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,0.3); }
+        .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .analyze-btn .spinner {
+            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+            display: none;
+        }
+        .analyze-btn.loading .spinner { display: block; }
+        .analyze-btn.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Results */
+        .results { display: none; margin-top: 40px; }
+        .results.visible { display: block; }
+        .results-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+        }
+        .results-header h3 { font-size: 1.3rem; font-weight: 700; }
+        .results-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+        .meta-badge {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+        }
+        .meta-badge.cost { background: rgba(16,185,129,0.1); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.2); }
+        .meta-badge.time { background: rgba(59,130,246,0.1); color: var(--accent); border: 1px solid rgba(59,130,246,0.2); }
+        .meta-badge.risk-low { background: rgba(16,185,129,0.1); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.2); }
+        .meta-badge.risk-medium { background: rgba(245,158,11,0.1); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.2); }
+        .meta-badge.risk-high { background: rgba(239,68,68,0.1); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.2); }
+        .summary-box {
+            background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15);
+            border-radius: 12px; padding: 20px; margin-bottom: 24px;
+            color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7;
+        }
+        .permits-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+        .permit-card {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; transition: border-color 0.2s;
+        }
+        .permit-card:hover { border-color: rgba(59,130,246,0.3); }
+        .permit-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .permit-name { font-weight: 700; font-size: 1.05rem; }
+        .permit-category {
+            padding: 3px 10px; border-radius: 6px; font-size: 0.7rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .cat-federal { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .cat-state { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .cat-local { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .cat-industry { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+        .permit-desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.6; }
+        .permit-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .permit-detail { }
+        .permit-detail .pd-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .permit-detail .pd-value { font-size: 0.9rem; font-weight: 600; margin-top: 2px; }
+        .diff-easy { color: var(--accent-green); }
+        .diff-moderate { color: var(--accent-amber); }
+        .diff-complex { color: var(--accent-red); }
+        .permit-tip {
+            margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+            font-size: 0.85rem; color: var(--text-secondary);
+        }
+        .permit-tip strong { color: var(--accent-amber); }
+
+        /* Checklist */
+        .checklist-section { margin-bottom: 32px; }
+        .checklist-section h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+        .checklist-item {
+            display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;
+            border-bottom: 1px solid rgba(42,51,82,0.5); color: var(--text-secondary); font-size: 0.9rem;
+        }
+        .checklist-item .check { color: var(--accent-green); font-weight: 700; flex-shrink: 0; }
+        .warnings-section { margin-bottom: 32px; }
+        .warnings-section h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent-amber); }
+        .warning-item {
+            background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15);
+            border-radius: 10px; padding: 14px 18px; margin-bottom: 10px;
+            color: var(--text-secondary); font-size: 0.9rem;
+        }
+
+        /* Signup Section */
+        .signup-section {
+            max-width: 700px; margin: 0 auto; padding: 80px 24px;
+            text-align: center;
+        }
+        .signup-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 48px 40px;
+            background-image: radial-gradient(circle at top right, rgba(139,92,246,0.06), transparent 50%),
+                              radial-gradient(circle at bottom left, rgba(59,130,246,0.06), transparent 50%);
+        }
+        .signup-card h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; }
+        .signup-card p { color: var(--text-secondary); margin-bottom: 32px; font-size: 1rem; }
+        .signup-form { display: flex; flex-direction: column; gap: 14px; max-width: 420px; margin: 0 auto; }
+        .signup-form input {
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 18px; color: var(--text-primary);
+            font-family: inherit; font-size: 0.95rem; text-align: center;
+        }
+        .signup-form input:focus { outline: none; border-color: var(--accent); }
+        .signup-btn {
+            padding: 14px; background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+            color: white; border: none; border-radius: 10px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: inherit;
+        }
+        .signup-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(139,92,246,0.3); }
+        .signup-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .signup-success {
+            display: none; color: var(--accent-green); font-weight: 600;
+            padding: 16px; background: rgba(16,185,129,0.1);
+            border-radius: 10px; margin-top: 10px;
+        }
+        .signup-success.visible { display: block; }
+
+        /* How it works */
+        .how-section { max-width: 1000px; margin: 0 auto; padding: 80px 24px; }
+        .how-section h2 { text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 48px; }
+        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+        .how-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; text-align: center;
+        }
+        .how-card .icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .how-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .how-card p { color: var(--text-secondary); font-size: 0.9rem; }
+        .how-card .step-num {
+            display: inline-block; width: 28px; height: 28px; line-height: 28px;
+            background: var(--accent); border-radius: 50%; font-size: 0.8rem;
+            font-weight: 700; margin-bottom: 12px;
+        }
+
+        /* Features */
+        .features-section { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+        .features-section h2 { text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 48px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 28px;
+        }
+        .feature-card .f-icon { font-size: 1.8rem; margin-bottom: 14px; }
+        .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+        .feature-card p { color: var(--text-secondary); font-size: 0.85rem; }
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 40px 24px;
+            border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .hero-stats { gap: 24px; }
+            .hero { padding: 130px 20px 60px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <div class="logo"><span>🧭</span> PermitPilot AI</div>
+            <div class="nav-links">
+                <a href="#tool">Analyze</a>
+                <a href="#how">How It Works</a>
+                <a href="#features">Features</a>
+                <a href="#signup" class="nav-cta">Get Early Access</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge"><span class="dot"></span> AI-Powered Permit Navigation</div>
+        <h1>Stop Guessing Which <span class="gradient">Permits You Need</span></h1>
+        <p>Tell us your business type and location. Our AI analyzes federal, state, and local requirements to give you a complete permit roadmap in seconds — not weeks.</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="num">50</div><div class="label">States Covered</div></div>
+            <div class="hero-stat"><div class="num">200+</div><div class="label">Business Types</div></div>
+            <div class="hero-stat"><div class="num">10K+</div><div class="label">Permits Mapped</div></div>
+            <div class="hero-stat"><div class="num">$2.4K</div><div class="label">Avg. Saved on Consulting</div></div>
+        </div>
+    </section>
+
+    <!-- Tool -->
+    <section id="tool" class="tool-section">
+        <div class="tool-card">
+            <div class="tool-header">
+                <h2>🔍 Permit Analyzer</h2>
+                <p>Enter your business details and get a comprehensive permit & license analysis powered by AI.</p>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Business Type</label>
+                    <select id="businessType">
+                        <option value="">Select your business type...</option>
+                        <option value="Restaurant / Food Service">Restaurant / Food Service</option>
+                        <option value="Food Truck / Mobile Food">Food Truck / Mobile Food</option>
+                        <option value="Bar / Brewery / Winery">Bar / Brewery / Winery</option>
+                        <option value="Retail Store">Retail Store</option>
+                        <option value="E-commerce / Online Store">E-commerce / Online Store</option>
+                        <option value="Hair Salon / Barbershop">Hair Salon / Barbershop</option>
+                        <option value="Day Care / Child Care">Day Care / Child Care</option>
+                        <option value="Construction / Contractor">Construction / Contractor</option>
+                        <option value="Real Estate Agency">Real Estate Agency</option>
+                        <option value="Fitness / Gym / Yoga Studio">Fitness / Gym / Yoga Studio</option>
+                        <option value="Medical Practice / Clinic">Medical Practice / Clinic</option>
+                        <option value="Dental Office">Dental Office</option>
+                        <option value="Auto Repair / Mechanic Shop">Auto Repair / Mechanic Shop</option>
+                        <option value="Trucking / Transportation">Trucking / Transportation</option>
+                        <option value="Cannabis Dispensary">Cannabis Dispensary</option>
+                        <option value="Dog Walking / Pet Services">Dog Walking / Pet Services</option>
+                        <option value="Consulting / Professional Services">Consulting / Professional Services</option>
+                        <option value="Software / Tech Startup">Software / Tech Startup</option>
+                        <option value="Photography / Videography">Photography / Videography</option>
+                        <option value="Landscaping / Lawn Care">Landscaping / Lawn Care</option>
+                        <option value="Cleaning Service">Cleaning Service</option>
+                        <option value="Event Planning / Catering">Event Planning / Catering</option>
+                        <option value="Accounting / Tax Preparation">Accounting / Tax Preparation</option>
+                        <option value="Tutoring / Education Center">Tutoring / Education Center</option>
+                        <option value="Other">Other (describe below)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <select id="state">
+                        <option value="">Select state...</option>
+                        <option value="Alabama">Alabama</option><option value="Alaska">Alaska</option><option value="Arizona">Arizona</option>
+                        <option value="Arkansas">Arkansas</option><option value="California">California</option><option value="Colorado">Colorado</option>
+                        <option value="Connecticut">Connecticut</option><option value="Delaware">Delaware</option><option value="Florida">Florida</option>
+                        <option value="Georgia">Georgia</option><option value="Hawaii">Hawaii</option><option value="Idaho">Idaho</option>
+                        <option value="Illinois">Illinois</option><option value="Indiana">Indiana</option><option value="Iowa">Iowa</option>
+                        <option value="Kansas">Kansas</option><option value="Kentucky">Kentucky</option><option value="Louisiana">Louisiana</option>
+                        <option value="Maine">Maine</option><option value="Maryland">Maryland</option><option value="Massachusetts">Massachusetts</option>
+                        <option value="Michigan">Michigan</option><option value="Minnesota">Minnesota</option><option value="Mississippi">Mississippi</option>
+                        <option value="Missouri">Missouri</option><option value="Montana">Montana</option><option value="Nebraska">Nebraska</option>
+                        <option value="Nevada">Nevada</option><option value="New Hampshire">New Hampshire</option><option value="New Jersey">New Jersey</option>
+                        <option value="New Mexico">New Mexico</option><option value="New York">New York</option><option value="North Carolina">North Carolina</option>
+                        <option value="North Dakota">North Dakota</option><option value="Ohio">Ohio</option><option value="Oklahoma">Oklahoma</option>
+                        <option value="Oregon">Oregon</option><option value="Pennsylvania">Pennsylvania</option><option value="Rhode Island">Rhode Island</option>
+                        <option value="South Carolina">South Carolina</option><option value="South Dakota">South Dakota</option><option value="Tennessee">Tennessee</option>
+                        <option value="Texas">Texas</option><option value="Utah">Utah</option><option value="Vermont">Vermont</option>
+                        <option value="Virginia">Virginia</option><option value="Washington">Washington</option><option value="West Virginia">West Virginia</option>
+                        <option value="Wisconsin">Wisconsin</option><option value="Wyoming">Wyoming</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>City (Optional)</label>
+                    <input type="text" id="city" placeholder="e.g., Austin, Portland, Miami">
+                </div>
+                <div class="form-group">
+                    <label>Number of Employees</label>
+                    <select id="employees">
+                        <option value="Solo / Just me">Solo / Just me</option>
+                        <option value="2-5 employees">2-5 employees</option>
+                        <option value="6-20 employees">6-20 employees</option>
+                        <option value="21-50 employees">21-50 employees</option>
+                        <option value="50+ employees">50+ employees</option>
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label>Additional Details (Optional)</label>
+                    <textarea id="description" placeholder="Describe your business in more detail. E.g., 'I want to open a wood-fired pizza restaurant with outdoor seating and a liquor license in downtown Denver'"></textarea>
+                </div>
+            </div>
+            <button class="analyze-btn" id="analyzeBtn" onclick="analyzePermits()">
+                <div class="spinner"></div>
+                <span class="btn-text">🧭 Analyze My Permit Requirements</span>
+            </button>
+
+            <!-- Results -->
+            <div class="results" id="results">
+                <div class="results-header">
+                    <h3>📋 Your Permit Analysis</h3>
+                    <div class="results-meta" id="resultsMeta"></div>
+                </div>
+                <div class="summary-box" id="summaryBox"></div>
+                <div class="permits-grid" id="permitsGrid"></div>
+                <div class="checklist-section" id="checklistSection">
+                    <h4>✅ Compliance Checklist</h4>
+                    <div id="checklistItems"></div>
+                </div>
+                <div class="warnings-section" id="warningsSection">
+                    <h4>⚠️ Important Warnings</h4>
+                    <div id="warningItems"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section id="how" class="how-section">
+        <h2>How It Works</h2>
+        <div class="how-grid">
+            <div class="how-card">
+                <span class="step-num">1</span>
+                <div class="icon">📝</div>
+                <h3>Tell Us Your Business</h3>
+                <p>Select your business type, location, and any specific details about your operation.</p>
+            </div>
+            <div class="how-card">
+                <span class="step-num">2</span>
+                <div class="icon">🤖</div>
+                <h3>AI Analyzes Requirements</h3>
+                <p>Our AI cross-references federal, state, and local databases to find every permit you need.</p>
+            </div>
+            <div class="how-card">
+                <span class="step-num">3</span>
+                <div class="icon">📋</div>
+                <h3>Get Your Roadmap</h3>
+                <p>Receive a complete checklist with costs, timelines, application links, and pro tips.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features-section">
+        <h2>Why PermitPilot?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="f-icon">🏛️</div>
+                <h3>All Government Levels</h3>
+                <p>Federal, state, county, and city — we cover every layer of bureaucracy so you don't miss anything.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-icon">💰</div>
+                <h3>Cost Estimates</h3>
+                <p>Know exactly how much each permit costs before you apply. No surprises, no hidden fees.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-icon">⏱️</div>
+                <h3>Timeline Projections</h3>
+                <p>See processing times and plan your launch date around the slowest permit approvals.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-icon">🎯</div>
+                <h3>Industry-Specific</h3>
+                <p>From food trucks to cannabis dispensaries — specialized knowledge for regulated industries.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-icon">📊</div>
+                <h3>Risk Assessment</h3>
+                <p>Understand your compliance risk level and which permits to prioritize first.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-icon">🔄</div>
+                <h3>Renewal Tracking</h3>
+                <p>Know which permits are one-time and which need annual renewal so you stay compliant.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Signup -->
+    <section id="signup" class="signup-section">
+        <div class="signup-card">
+            <h2>Join the Waitlist</h2>
+            <p>Get early access to PermitPilot AI Pro — includes saved analyses, renewal reminders, and application assistance.</p>
+            <div class="signup-form">
+                <input type="text" id="signupName" placeholder="Your name">
+                <input type="email" id="signupEmail" placeholder="Your email address">
+                <button class="signup-btn" id="signupBtn" onclick="handleSignup()">Get Early Access →</button>
+                <div class="signup-success" id="signupSuccess">🎉 You're on the list! Check your inbox for a welcome email.</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>PermitPilot AI © 2026 — Navigate permits, not paperwork. Built with AI.</p>
+    </footer>
+
+    <script>
+        async function analyzePermits() {
+            const businessType = document.getElementById('businessType').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const description = document.getElementById('description').value;
+            const employees = document.getElementById('employees').value;
+
+            if (!businessType || !state) {
+                alert('Please select a business type and state.');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/analyze-permits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        businessType,
+                        state,
+                        city,
+                        description: `${description} (${employees})`
+                    })
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                renderResults(data);
+            } catch (err) {
+                alert('Analysis failed: ' + err.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        function renderResults(data) {
+            const results = document.getElementById('results');
+            results.classList.add('visible');
+
+            // Meta badges
+            const meta = document.getElementById('resultsMeta');
+            const riskClass = 'risk-' + (data.riskLevel || 'medium');
+            meta.innerHTML = `
+                <span class="meta-badge cost">💰 ${data.estimatedTotalCost || 'Varies'}</span>
+                <span class="meta-badge time">⏱️ ${data.estimatedTimeline || 'Varies'}</span>
+                <span class="meta-badge ${riskClass}">📊 ${(data.riskLevel || 'medium').toUpperCase()} RISK</span>
+            `;
+
+            // Summary
+            document.getElementById('summaryBox').textContent = data.summary || '';
+
+            // Permits
+            const grid = document.getElementById('permitsGrid');
+            grid.innerHTML = (data.permits || []).map(p => `
+                <div class="permit-card">
+                    <div class="permit-top">
+                        <span class="permit-name">${p.name}</span>
+                        <span class="permit-category cat-${p.category || 'state'}">${p.category || 'General'}</span>
+                    </div>
+                    <div class="permit-desc">${p.description}</div>
+                    <div class="permit-details">
+                        <div class="permit-detail">
+                            <div class="pd-label">Est. Cost</div>
+                            <div class="pd-value">${p.estimatedCost || 'Varies'}</div>
+                        </div>
+                        <div class="permit-detail">
+                            <div class="pd-label">Processing Time</div>
+                            <div class="pd-value">${p.processingTime || 'Varies'}</div>
+                        </div>
+                        <div class="permit-detail">
+                            <div class="pd-label">Renewal</div>
+                            <div class="pd-value">${p.renewalFrequency || 'Varies'}</div>
+                        </div>
+                        <div class="permit-detail">
+                            <div class="pd-label">Difficulty</div>
+                            <div class="pd-value diff-${p.difficulty || 'moderate'}">${(p.difficulty || 'moderate').toUpperCase()}</div>
+                        </div>
+                    </div>
+                    ${p.tips ? `<div class="permit-tip"><strong>💡 Tip:</strong> ${p.tips}</div>` : ''}
+                </div>
+            `).join('');
+
+            // Checklist
+            const checklistItems = document.getElementById('checklistItems');
+            checklistItems.innerHTML = (data.complianceChecklist || []).map(item => `
+                <div class="checklist-item"><span class="check">→</span> ${item}</div>
+            `).join('');
+
+            // Warnings
+            const warningItems = document.getElementById('warningItems');
+            const warningsSection = document.getElementById('warningsSection');
+            if (data.warnings && data.warnings.length > 0) {
+                warningsSection.style.display = 'block';
+                warningItems.innerHTML = data.warnings.map(w => `<div class="warning-item">⚠️ ${w}</div>`).join('');
+            } else {
+                warningsSection.style.display = 'none';
+            }
+
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const businessType = document.getElementById('businessType').value;
+
+            if (!email) { alert('Please enter your email address.'); return; }
+
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing up...';
+
+            try {
+                const res = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name, businessType })
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                document.getElementById('signupSuccess').classList.add('visible');
+                btn.textContent = 'You\'re In! ✓';
+            } catch (err) {
+                alert('Signup failed: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Get Early Access →';
+            }
+        }
+    </script>
+</body>
+</html>
